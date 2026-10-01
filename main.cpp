@@ -3,10 +3,22 @@
 #include <GL/gl.h>
 #include <cmath>
 #include <string>
-#include "utils.h"
 #include <sstream>
+
+#include "Model.h"
+#include "utils.h"
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+#include "window_manager.h"
+
+
 int width = 800;
 int height = 600;
+
+
 unsigned char* pixels = new unsigned char[width * height * 4];
 
 void draw();
@@ -227,45 +239,54 @@ void drawWireframe(object o)
 
 int main() 
 {
-  if (!glfwInit()) 
-  {
-    return -1;
-  }
-
-  GLFWwindow* window = glfwCreateWindow(width, height, "sr", nullptr,nullptr);
-  if(!window)
-  {
-    glfwTerminate();
-    return -1;
-  }
-
-  glfwMakeContextCurrent(window);
-
-  object diablo = loadObject("./objects/diablo3_pose.obj"); 
-  diablo.scale = 200;
   
-  object cube = loadObject("./objects/cube.obj");
-  cube.scale = 200;
-  while (!glfwWindowShouldClose(window)) {
+  try 
+  {
+    WindowManager windowManager(width,height, "glfw default");
+    GLFWwindow* window = windowManager.getWindow();
+    if (!window)
+    {
+      return 0 ;
+    }
     
-    /// draw 
-
-    clear(dark_gray);
   
-    cam.position = Vec3{0, 0, -300};
-
-    //drawWireframe(diablo);
-    drawWireframe(cube);
+    
+    Model model("./objects/diablo3_pose.obj");
 
 
-    ////////////
-    glClear(GL_COLOR_BUFFER_BIT);
-    glRasterPos2f(-1.0f,-1.0f);
-    glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-    glPixelZoom(1.0f, 1.0f);
-    glfwSwapBuffers(window);
-    glfwPollEvents();
+    while (!windowManager.shouldClose())
+    {
+      windowManager.pollEvents();
+    
+      clear(dark_gray);
+  
+      cam.position = Vec3{0, 0, -300};
+
+      //drawWireframe(diablo);
+      //drawWireframe(cube);
+
+
+      ////////////
+      glClear(GL_COLOR_BUFFER_BIT);
+      glRasterPos2f(-1.0f,-1.0f);
+      glDrawPixels(width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+      glPixelZoom(1.0f, 1.0f);
+
+      windowManager.beginImGuiFrame();
+      //bool show_demo_window = false;
+      //ImGui::ShowDemoWindow(&show_demo_window);
+      windowManager.renderImGui();
+      
+      windowManager.swapBuffers();
+    }
+
+  } 
+  catch (const std::exception& e)
+  {
+    std::cerr << "Error" << e.what() << std::endl;
+    return -1;
   }
+
   delete[] pixels;
   glfwTerminate();
   return 0;
